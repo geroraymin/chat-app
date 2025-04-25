@@ -8,7 +8,7 @@ const app = express();
 // CORS 설정
 const corsOptions = {
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-client-domain.com'] // 프로덕션 환경에서는 실제 도메인으로 변경
+    ? ['https://chat-app-blush-sigma.vercel.app'] // Vercel 클라이언트 도메인
     : ['http://localhost:5177'], // 개발 환경에서는 로컬 클라이언트 주소
   methods: ["GET", "POST"],
   credentials: true
