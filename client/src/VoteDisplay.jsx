@@ -1,82 +1,118 @@
-import React from "react";
-import { Doughnut } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  ArcElement,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import React, { useEffect, useState } from 'react';
+import { socket } from './socket';
+import './VoteDisplay.css';
 
-ChartJS.register(ArcElement, Tooltip, Legend);
+const VoteDisplay = ({ isAdmin, nickname, voteData, userVotes, onVote, onEndVote }) => {
+  const [localVotes, setLocalVotes] = useState(voteData || []);
 
-function VoteDisplay({ voteData, socket, nickname, userVotes, setUserVotes }) {
-  const handleVote = (voteId, choice, isEnded) => {
-    if (userVotes[voteId] || isEnded) return;
-    socket.emit("submit_vote", { voteId, option: choice, nickname });
-    setUserVotes((prev) => ({ ...prev, [voteId]: choice }));
+  useEffect(() => {
+    setLocalVotes(voteData);
+  }, [voteData]);
+
+  useEffect(() => {
+    console.log('VoteDisplay mounted');
+
+    socket.on("vote_updated", (updatedVote) => {
+      console.log('Vote updated:', updatedVote);
+      setLocalVotes(prev => 
+        prev.map(v => v.id === updatedVote.id ? updatedVote : v)
+      );
+    });
+
+    return () => {
+      socket.off("vote_updated");
+    };
+  }, []);
+
+  const handleVote = (voteId, optionIndex) => {
+    if (onVote) {
+      onVote(voteId, optionIndex);
+    }
   };
 
+  const handleEndVote = (voteId) => {
+    if (onEndVote) {
+      onEndVote(voteId);
+    }
+  };
+
+  const calculatePercentage = (count, total) => {
+    if (total === 0) return 0;
+    return Math.round((count / total) * 100);
+  };
+
+  if (!localVotes || localVotes.length === 0) {
+    return (
+      <div className="vote-display">
+        <h2>투표</h2>
+        <p>현재 진행 중인 투표가 없습니다.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="vote-container">
-      {voteData.map((vote) => {
-        const hasVoted = !!userVotes[vote.id];
-        const results = vote.results || {};
-        const totalVotes = Object.values(results).reduce((a, b) => a + b, 0);
+    <div className="vote-display">
+      <h2>투표</h2>
+      <div className="votes-list">
+        {localVotes.map((vote) => {
+          const totalVotes = vote.results.reduce((sum, count) => sum + count, 0);
+          const hasVoted = userVotes[vote.id] !== undefined;
 
-        const chartData = {
-          labels: vote.options,
-          datasets: [
-            {
-              data: vote.options.map((opt) => results[opt] || 0),
-              backgroundColor: [
-                "#4a90e2",
-                "#50e3c2",
-                "#f8e71c",
-                "#e94e77",
-                "#7ed6df",
-                "#f9ca24",
-              ],
-              borderWidth: 1,
-            },
-          ],
-        };
+          return (
+            <div key={vote.id} className={`vote-item ${!vote.isActive ? 'ended' : ''}`}>
+              <h3>{vote.title}</h3>
+              <div className="vote-options">
+                {vote.options.map((option, index) => {
+                  const percentage = calculatePercentage(vote.results[index], totalVotes);
+                  const isSelected = userVotes[vote.id] === index;
 
-        return (
-          <div className="vote-box" key={vote.id}>
-            <h3>
-              🗳 {vote.title}
-              {vote.ended && <span style={{ color: "red", marginLeft: "10px" }}>투표 종료됨</span>}
-            </h3>
-
-            {!hasVoted && (
-              <div>
-                {vote.options.map((opt, idx) => (
-                  <label className="vote-option" key={idx}>
-                    <input
-                      type="radio"
-                      name={`vote-${vote.id}`}
-                      onChange={() => handleVote(vote.id, opt, vote.ended)}
-                      disabled={vote.ended}
-                    />
-                    {opt}
-                  </label>
-                ))}
+                  return (
+                    <div key={index} className="vote-option">
+                      {(!hasVoted && vote.isActive) ? (
+                        <button
+                          className={`vote-button ${isSelected ? 'voted' : ''}`}
+                          onClick={() => handleVote(vote.id, index)}
+                          disabled={!vote.isActive || hasVoted}
+                        >
+                          {option}
+                        </button>
+                      ) : (
+                        <div className="vote-result">
+                          <div 
+                            className="vote-bar" 
+                            style={{ width: `${percentage}%` }}
+                          />
+                          <span>
+                            {option} ({vote.results[index]}표, {percentage}%)
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-
-            {hasVoted && (
-              <div className="vote-result">
-                <Doughnut data={chartData} />
-                <p style={{ marginTop: "10px", textAlign: "center" }}>
-                  총 투표 수: {totalVotes}
-                </p>
+              <div className="vote-info">
+                <span>총 {totalVotes}명 참여</span>
+                <span className={`vote-status ${!vote.isActive ? 'ended' : ''}`}>
+                  {vote.isActive ? '진행중' : '종료됨'}
+                </span>
               </div>
-            )}
-          </div>
-        );
-      })}
+              {isAdmin && vote.isActive && (
+                <div className="admin-controls">
+                  <button 
+                    onClick={() => handleEndVote(vote.id)}
+                    className="end-vote-button"
+                  >
+                    투표 종료
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
-}
+};
 
 export default VoteDisplay;

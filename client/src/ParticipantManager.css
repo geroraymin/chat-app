@@ -1,0 +1,90 @@
+.participant-manager {
+  padding: 20px;
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.participant-manager h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+}
+
+.participants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.participant-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e1e1e1;
+}
+
+.participant-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #dc3545;
+}
+
+.status-dot.online {
+  background-color: #28a745;
+}
+
+.nickname {
+  font-size: 15px;
+  color: #2c3e50;
+}
+
+.muted-badge {
+  font-size: 12px;
+  padding: 2px 6px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 4px;
+}
+
+.participant-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.mute-button, .ban-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background-color 0.2s;
+}
+
+.mute-button {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.mute-button.unmute {
+  background-color: #28a745;
+  color: white;
+}
+
+.ban-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+.mute-button:hover, .ban-button:hover {
+  opacity: 0.9;
+} 
