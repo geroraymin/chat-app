@@ -5,8 +5,9 @@ import "./App.css";
 
 const SOCKET_URL = "https://chat-app-n21i.onrender.com";
 const socket = io(SOCKET_URL, {
-  withCredentials: true,
-  transports: ['websocket', 'polling']
+  transports: ['websocket', 'polling'],
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000
 });
 
 function App() {

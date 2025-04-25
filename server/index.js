@@ -7,9 +7,10 @@ const app = express();
 
 // CORS 설정
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://chat-app-blush-sigma.vercel.app'] // Vercel 클라이언트 도메인
-    : ['http://localhost:5177'], // 개발 환경에서는 로컬 클라이언트 주소
+  origin: [
+    'https://chat-app-blush-sigma.vercel.app',
+    'http://localhost:5177'
+  ],
   methods: ["GET", "POST"],
   credentials: true
 };
@@ -71,6 +72,7 @@ io.on("connection", (socket) => {
   });
 });
 
-server.listen(3001, () => {
-  console.log("🚀 서버 실행 중: http://localhost:3001");
+const PORT = process.env.PORT || 3001;
+server.listen(PORT, () => {
+  console.log(`🚀 서버 실행 중: http://localhost:${PORT}`);
 });
