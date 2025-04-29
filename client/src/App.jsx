@@ -63,6 +63,9 @@ function App() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
+  // 채팅 금지 상태
+  const [isMuted, setIsMuted] = useState(false);
+
   // 메모이제이션된 도구 목록
   const tools = useMemo(() => {
     const baseTools = [
@@ -339,6 +342,29 @@ function App() {
       setVoteData(roomInfo.votes || []);
     });
 
+    socket.on("mute_status", (mutedStatus) => {
+      setIsMuted(mutedStatus);
+      const message = mutedStatus 
+        ? "관리자가 채팅을 금지했습니다." 
+        : "관리자가 채팅을 허용했습니다.";
+      setMessages(prev => [...prev, {
+        id: Date.now(),
+        type: 'system',
+        message,
+        timestamp: new Date().toISOString()
+      }]);
+    });
+
+    // 시스템 메시지 리스너 추가
+    socket.on("system_message", (data) => {
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        type: 'system',
+        message: data.message,
+        timestamp: new Date().toISOString()
+      }]);
+    });
+
     return () => {
       socket.off("participants_update");
       socket.off("chat message");
@@ -346,6 +372,8 @@ function App() {
       socket.off("vote_data");
       socket.off("questions_update");
       socket.off("room_info");
+      socket.off("mute_status");
+      socket.off("system_message");
     };
   }, [socket, roomId]);
 
@@ -781,7 +809,10 @@ function App() {
               </div>
               {isAdmin && (
                 <button
-                  onClick={() => setActiveTool('notice')}
+                  onClick={() => {
+                    setShowSidePanel(true);
+                    setActiveTool('notice');
+                  }}
                   style={{
                     padding: '4px 8px',
                     backgroundColor: 'transparent',
@@ -860,67 +891,115 @@ function App() {
             flexDirection: 'column',
             padding: '20px'
           }}>
-            <h2 style={{ margin: '0 0 16px 0' }}>💬 실시간 채팅</h2>
-            <div className="chat-box" style={{ flex: 1, overflowY: 'auto' }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '16px'
+            }}>
+              <h2 style={{ margin: 0 }}>💬 실시간 채팅</h2>
+              <button
+                onClick={() => setShowSidePanel(!showSidePanel)}
+                style={{
+                  padding: '8px',
+                  backgroundColor: '#f0f2f5',
+                  border: 'none',
+                  borderRadius: '50%',
+                  cursor: 'pointer',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px'
+                }}
+              >
+                {showSidePanel ? '×' : '≡'}
+              </button>
+            </div>
+            <div className="chat-box" style={{ 
+              flex: 1, 
+              overflowY: 'auto',
+              padding: '10px'
+            }}>
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`chat-message-wrapper ${
-                    msg.senderId === clientId ? "me" : "others"
-                  }`}
+                  style={{
+                    display: 'flex',
+                    justifyContent: msg.type === 'system' ? 'center' : msg.senderId === clientId ? 'flex-end' : 'flex-start',
+                    margin: '8px 0',
+                    position: 'relative'
+                  }}
                 >
-                  <div className="chat-bubble">
-                    <strong>{msg.nickname}:</strong> {msg.message}
-                  </div>
+                  {msg.type === 'system' ? (
+                    <div
+                      style={{
+                        backgroundColor: '#f8f9fa',
+                        padding: '8px 16px',
+                        borderRadius: '15px',
+                        color: '#666',
+                        fontSize: '0.9em',
+                        maxWidth: '80%',
+                        textAlign: 'center'
+                      }}
+                    >
+                      {msg.message}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        maxWidth: '70%',
+                        padding: '8px 12px',
+                        borderRadius: msg.senderId === clientId ? '15px 15px 0 15px' : '15px 15px 15px 0',
+                        backgroundColor: msg.senderId === clientId ? '#007bff' : '#e9ecef',
+                        color: msg.senderId === clientId ? 'white' : 'black',
+                        position: 'relative'
+                      }}
+                    >
+                      <div style={{ 
+                        fontWeight: 'bold', 
+                        fontSize: '0.9em',
+                        marginBottom: '4px',
+                        color: msg.senderId === clientId ? '#fff' : '#666'
+                      }}>
+                        {msg.nickname}
+                      </div>
+                      <div style={{ wordBreak: 'break-word' }}>
+                        {msg.message}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
               <div ref={messagesEndRef} />
             </div>
-            <div className="input-area" style={{ 
-              marginTop: '16px',
-              display: 'flex',
-              gap: '8px'
-            }}>
-              <button 
-                onClick={() => setShowSidePanel(!showSidePanel)}
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '20px',
-                  border: 'none',
-                  backgroundColor: '#f0f2f5',
-                  cursor: 'pointer',
-                  fontSize: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                {showSidePanel ? '✕' : '+'}
-              </button>
+            <div className="input-area">
               <input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="메시지를 입력하세요..."
+                placeholder={isMuted ? "채팅이 금지되었습니다" : "메시지를 입력하세요..."}
+                disabled={isMuted}
                 style={{
                   flex: 1,
                   padding: '8px 16px',
                   borderRadius: '20px',
                   border: '1px solid #e1e1e1',
-                  fontSize: '15px'
+                  fontSize: '15px',
+                  backgroundColor: isMuted ? '#f5f5f5' : 'white'
                 }}
               />
-              <button 
+              <button
                 onClick={handleSend}
+                disabled={isMuted}
                 style={{
                   padding: '8px 20px',
                   borderRadius: '20px',
                   border: 'none',
-                  backgroundColor: '#4a90e2',
+                  backgroundColor: isMuted ? '#cccccc' : '#4a90e2',
                   color: 'white',
-                  cursor: 'pointer',
+                  cursor: isMuted ? 'not-allowed' : 'pointer',
                   fontSize: '15px'
                 }}
               >
