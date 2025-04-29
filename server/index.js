@@ -6,11 +6,17 @@ const cors = require("cors");
 const app = express();
 
 // CORS 설정
-app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5177"],
-  methods: ["GET", "POST"],
+const corsOptions = {
+  origin: [
+    "https://chat-app-blush-sigma.vercel.app", // Vercel 배포 주소
+    "http://localhost:5173",                   // 로컬 개발 주소
+    "http://localhost:5177"                    // 로컬 개발 주소
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   credentials: true
-}));
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json());
 
