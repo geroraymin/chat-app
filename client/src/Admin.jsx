@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import io from "socket.io-client";
-const socket = io("http://localhost:3001");
+const socket = io("https://chat-app-n2l1.onrender.com");
 
 function Admin() {
   const [title, setTitle] = useState("");

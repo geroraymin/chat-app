@@ -117,7 +117,7 @@ function App() {
       setIsLoading(true);
       setError(null);
       
-      const response = await fetch("http://localhost:3001/api/rooms", {
+      const response = await fetch("https://chat-app-n2l1.onrender.com/api/rooms", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -142,7 +142,7 @@ function App() {
     } catch (error) {
       console.error("방 생성 실패:", error);
       if (error.message === "Failed to fetch") {
-        setError("서버가 실행중인지 확인해주세요. (포트: 3001)");
+        setError("서버가 실행중인지 확인해주세요. (https://chat-app-n2l1.onrender.com)");
       } else {
         setError(error.message || ERROR_MESSAGES.ROOM_CREATE_FAILED);
       }
@@ -168,7 +168,7 @@ function App() {
         return;
       }
 
-      const response = await fetch(`http://localhost:3001/api/rooms/${joinRoomId.trim()}`);
+      const response = await fetch(`https://chat-app-n2l1.onrender.com/api/rooms/${joinRoomId.trim()}`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -181,7 +181,7 @@ function App() {
     } catch (error) {
       console.error("방 입장 실패:", error);
       if (error.message === "Failed to fetch") {
-        setError("서버가 실행중인지 확인해주세요. (포트: 3001)");
+        setError("서버가 실행중인지 확인해주세요. (https://chat-app-n2l1.onrender.com)");
       } else {
         setError(error.message || ERROR_MESSAGES.ROOM_JOIN_FAILED);
       }
