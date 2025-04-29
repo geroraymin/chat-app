@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:3001";
+const SOCKET_URL = "https://chat-app-n2l1.onrender.com";
 
 export const socket = io(SOCKET_URL, {
   transports: ['websocket', 'polling'],
